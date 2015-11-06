@@ -16,43 +16,45 @@ import java.util.Iterator;
 import java.util.Random;
 
 public class Firefly {
-
+    static Random random = new Random();
+    static long seed;
+    static int[][] matrix = null;
+    static int cantRestricciones, cantCostos;
+    static ArrayList<String> vectorCostos = new ArrayList<String>(); //vector de costos
     public static void main(String[] args) {
         //Parte 1: Leer Archivo
         File archivo = null;
         FileReader fr = null;
         BufferedReader br = null;
         int cantidad = 0; //cantidad de filas que lleva el texto
-        int restr = 0; // cantidad de restricciones
-        int costos = 0;// cantidad de variables
         int canNum = 0; // cantidad de numeros entrando al vector de costos
         int colRest = 0;//numero de restricciones por columna
         int i = 0;// columnas recorridas de la matriz
         int j = 0;// filas recorridas de la matriz
-        int[][] matrizRest = null;
+        
         ArrayList<String> arrayTemp = new ArrayList<String>();
-        ArrayList<String> vecCost = new ArrayList<String>(); //vector de costos
+        
 
         String delimitadores = "[ .,;?!¡¿\'\"\\[\\]]+";
 
         try {
-            archivo = new File("scp41.txt");
+            archivo = new File("input/scp41.txt");
             fr = new FileReader(archivo);
             br = new BufferedReader(fr);
             String linea;
             while ((linea = br.readLine()) != null) {
                 if (cantidad < 1) {
                     String[] datos = linea.split(delimitadores);
-                    restr = Integer.parseInt(datos[1]); //se le asigna el primer valor del txt
-                    costos = Integer.parseInt(datos[2]); //se le asigna el segundo valor del txt
+                    cantRestricciones = Integer.parseInt(datos[1]); //se le asigna el primer valor del txt
+                    cantCostos = Integer.parseInt(datos[2]); //se le asigna el segundo valor del txt
 
-                    matrizRest = new int[restr][costos];
+                    matrix = new int[cantRestricciones][cantCostos];
                 } else {
-                    if (canNum < costos) { //agrega valores a vector de costos
+                    if (canNum < cantCostos) { //agrega valores a vector de costos
                         String[] temp = linea.split(delimitadores);
                         canNum = canNum + temp.length - 1;
                         for (int x = 1; x <= temp.length - 1; x++) {
-                            vecCost.add(temp[x]);
+                            vectorCostos.add( Integer.parseInt(temp[x]) );
                         }
                     } else if (colRest == 0) {//recibir la cantidad de columnas con restricciones
                         String[] temp2 = linea.split(delimitadores);
@@ -69,7 +71,7 @@ public class Firefly {
                         } else if (temp3.length - 1 == colRest) {//si el arreglo se llena, pasa a la siguiente restriccion
                             for (int x = 0; x < arrayTemp.size(); x++) {
                                 j = Integer.parseInt(arrayTemp.get(x));
-                                matrizRest[i][j - 1] = 1;
+                                matrix[i][j - 1] = 1;
                                 //System.out.println("segundo if, posicion [" + i + "],[" + j + "]: " + matrizRest[i][j-1]);
 
                             }
@@ -82,26 +84,7 @@ public class Firefly {
                 }
                 cantidad++;
             }
-            Iterator<String> nombreIterator = vecCost.iterator();
-            int cont = 0;
-            while (nombreIterator.hasNext()) {
-                cont++;
-                String elemento = nombreIterator.next();
-                System.out.print("\n Elemento: " + elemento + " cont: " + cont + " / ");
-            }
-            for (int x = 0; x < matrizRest.length; x++) {
-                System.out.print("|");
-                for (int y = 0; y < matrizRest[x].length; y++) {
-                    System.out.print(matrizRest[x][y]);
-                    if (y != matrizRest[x].length - 1) {
-                        System.out.print("\t");
-                    }
-                }
-                System.out.println("|");
-            }
 
-            //System.out.println(restr + " " + costos);
-            //System.out.println("ultima: " + linea);
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
@@ -113,70 +96,68 @@ public class Firefly {
                 e2.printStackTrace();
             }
         }
+        System.out.println("Matriz de: "+matrix.length+"x"+matrix[0].length);
+        
+        
         //parte 2: 
-        int semillain = 10; //cantidad de semillas iniciales 
-        Random aleatorio = new Random();
-        int[][] randomseed = new int[semillain][costos]; //vector de semillas iniciales
-        int v = 0;
-        long seed = System.currentTimeMillis();
-        aleatorio.setSeed(seed);
-        float rand;
-        System.out.println("semilla: " + seed);
-        System.out.println("random original: ");
-        for (int y = 0; y < randomseed.length; y++) {
-            for (int x = 0; x < randomseed[y].length; x++) {
-                rand = aleatorio.nextFloat();
-                if (rand <= 0.5) {
-                    randomseed[y][x] = 0;
-                } else {
-                    randomseed[y][x] = 1;
-                }
-
-                System.out.print("" + randomseed[y][x]);
-            }
-            System.out.print("\n");
+        System.out.println("costos:");
+        for(String costo: vectorCostos){
+            System.out.println(costo);
         }
-        //evaluar semilla por cada restriccion
-        //si no cumple se debe reparar
-        int contador = 0;
-        int y;
-        int o = 0;
-        while (o < semillain) {
-            while (v < restr) {//Función para recorrer las filas de la matriz de la restricción
-                for (int w = 0; w < costos; w++) {//recorre las columnas de la matriz de restriccion
-                    if (matrizRest[v][w] == 1) {//recorremos la matriz hasta encontrar un 1
-                        if (matrizRest[v][w] == randomseed[o][w]) {//se compara el 1 con el vector de semillas iniciales
-                            //v++;//quiere decir que se cumplió y se pasa a la siguiente restricción
-                            System.out.println("factible");//es factible
-                            contador++;
-                            w = costos;//Si no se hace, sigue recorriendo el arreglo
-                        }
-                    }
-                    //reparar
-                    if (w == costos - 1) {
-                        y = 0;
-                        while (matrizRest[v][y] == 0) {
-                            y++;
-                        }
-                        randomseed[o][y] = 1;
-                        System.out.println("se ha reparado en la posición: " + (y + 1));
-                        //v++;
-                        contador++;
-                    }
-                }
-                v++;
-            }
-            o++;
-        }
-        System.out.println("contador " + contador);
-        System.out.println("randoms reparados: ");
-
-        for (int l = 0; l < randomseed.length; l++) {
-            for (int m = 0; m < randomseed[l].length; m++) {
-                System.out.print("" + randomseed[l][m]);
-            }
-            System.out.print("\n");
-        }
+//               
+//        seed = System.currentTimeMillis();
+//        random.setSeed(seed);
+//        ArrayList<int[]> luciernagas = new ArrayList();
+//        for (int k = 0; k < 10; k++)
+//            luciernagas.add( 
+//                    validarYReparar(
+//                        generarLuciernagaAleatoria()) );
+        
+            
+        
+        
     }
+    public static long getFitness(int[] luciernaga){
+//        for (int i = 0; i < luciernaga; i++) {
+//            
+//        }
+        return 0;
+    }
+    
+    public static int[] validarYReparar(int[] luciernaga){
+        boolean factible = false;
+        int indiceJPrimerUno = -1;
+        for (int i = 0; i < cantRestricciones; i++) { // recorriendo restricciones
+            for (int j = 0; j < cantCostos; j++) { // recorriendo componentes de restriccion
+                if( matrix[i][j] == 1) {
+                    indiceJPrimerUno=j;
+                    if (luciernaga[j]==1 ){
+                        factible= true;
+                        break;
+                    }
+                }
+            }
+        }
+        if(!factible && indiceJPrimerUno!=-1){
+            luciernaga[indiceJPrimerUno] = 1;
+        }
+        return luciernaga;
+    }
+    
+    public static int[] generarLuciernagaAleatoria(){
+        int[] nuevaLuciernaga = new int[cantCostos];
+        for (int i = 0; i < cantCostos; i++) {
+            nuevaLuciernaga[i] = Math.round(random.nextFloat());
+        }
+        return nuevaLuciernaga;
+    }
+    
+    public int[] aplicarMovimiento(int[] luciernaga){
+        int[] nuevaLuciernaga = new int[luciernaga.length];
+        for (int i = 0; i < luciernaga.length; i++) {
+            nuevaLuciernaga[i] = Math.round(random.nextFloat());
+        }
+        return nuevaLuciernaga;
+    } 
 
 }
